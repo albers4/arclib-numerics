@@ -1,0 +1,9 @@
+[package]
+name = "arclib-numerics-example"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+arclib-numerics-spec = { path = "../arclib-numerics-spec" }
+arclib-numerics-impl = { path = "../arclib-numerics-impl" }

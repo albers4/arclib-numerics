@@ -1,0 +1,17 @@
+[package]
+name = "arclib-numerics-py"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+name = "arclib_numerics"
+crate-type = ["cdylib"]
+
+[dependencies]
+arclib-numerics-spec = { path = "../arclib-numerics-spec" }
+arclib-numerics-impl = { path = "../arclib-numerics-impl" }
+pyo3 = { version = "0.28", features = ["extension-module"] }
+
+[dev-dependencies]

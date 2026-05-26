@@ -1,0 +1,29 @@
+[package]
+name = "arclib-numerics-impl"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+build = "build.rs"
+
+[dependencies]
+arclib-numerics-spec = { path = "../arclib-numerics-spec" }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+pprof = { version = "0.15", features = ["flamegraph", "criterion"] }
+
+[build-dependencies]
+cc = "1.0"
+
+[features]
+default = ["std"]
+std = []
+
+[[bench]]
+name = "dense_array_benchmark"
+harness = false
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
