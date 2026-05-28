@@ -8,7 +8,7 @@ use arclib_numerics_impl::{
     BoundaryCondition, BoundaryConditionNode, ConstantNode, EquationGraph, EquationNode,
     ExportNode, NextStateNode, NumericsContextValue, NumericsGraph, ProbeNode, StateNode,
     domains::{
-        grid::{D2Q9, D3Q19, LatticeCompiler, LbmProbeExtractor, LbmVelocityBC, LbmVtkExporter},
+        grid::{D3Q19, LatticeCompiler, LbmProbeExtractor, LbmVelocityBC, LbmVtkExporter},
         probe::ScalarProbeExtractor,
     },
 };
