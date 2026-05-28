@@ -1,7 +1,7 @@
 // Copyright (c) 2026 ARC (Applied Research & Computation)
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-use std::{marker::PhantomData, os::raw::c_void};
+use std::{ffi::c_void, marker::PhantomData};
 
 use arclib_graph_impl::Graph;
 use arclib_numerics_spec::{

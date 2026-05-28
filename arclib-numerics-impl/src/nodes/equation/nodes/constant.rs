@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use arclib_graph_impl::fnv1a_hash;
 use arclib_graph_spec::{Node, NodeId, Shape};
-use arclib_numerics_spec::Tensor;
+use arclib_numerics_spec::tensor::Tensor;
 use ndarray::{arr0, arr1};
 use uuid::Uuid;
 
@@ -21,14 +21,14 @@ impl EqConstantNode {
     pub fn scalar(val: f32) -> Self {
         Self {
             id: Uuid::new_v4(),
-            tensor: Arc::new(arr0(val).into_dyn()),
+            tensor: Arc::new(Tensor::from_cpu_array(arr0(val).into_dyn())),
         }
     }
 
     pub fn vector(vals: &[f32]) -> Self {
         Self {
             id: Uuid::new_v4(),
-            tensor: Arc::new(arr1(vals).into_dyn()),
+            tensor: Arc::new(Tensor::from_cpu_array(arr1(vals).into_dyn())),
         }
     }
 
@@ -82,6 +82,6 @@ impl Node<NumericsContextValue> for EqConstantNode {
     }
 
     fn infer_shape(&self, _inputs: &[Shape]) -> Result<Shape, String> {
-        Ok(Shape(self.tensor.shape().to_vec()))
+        Ok(self.tensor.shape.clone())
     }
 }

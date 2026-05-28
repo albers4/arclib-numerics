@@ -5,7 +5,7 @@ use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
 use arclib_graph_impl::{Graph, topological_sort};
 use arclib_graph_spec::{GraphLike, Node, NodeId, Shape};
-use arclib_numerics_spec::{Tensor, domain::DomainCompiler};
+use arclib_numerics_spec::{domain::DomainCompiler, tensor::Tensor};
 
 use crate::{
     context::NumericsContextValue,

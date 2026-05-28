@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use arclib_graph_impl::fnv1a_hash;
 use arclib_graph_spec::{Node, NodeId, Shape};
+use arclib_numerics_spec::tensor::Tensor;
 use ndarray::ArrayD;
 use uuid::Uuid;
 
@@ -53,7 +54,7 @@ impl Node<NumericsContextValue> for EqUnaryNode {
             _ => panic!("EqUnaryNode: Input missing or not a tensor"),
         };
 
-        let in_tensor = in_arc.as_ref();
+        let in_tensor = in_arc.as_cpu();
 
         let result: ArrayD<f32> = match self.op {
             EqUnaryOp::Neg => -in_tensor,
@@ -62,8 +63,12 @@ impl Node<NumericsContextValue> for EqUnaryNode {
             EqUnaryOp::Abs => in_tensor.mapv(|x| x.abs()),
         };
 
-        ctx.temp
-            .insert(self.id, NumericsContextValue::Tensor(Arc::new(result)));
+        let result_tensor = Tensor::from_cpu_array(result);
+
+        ctx.temp.insert(
+            self.id,
+            NumericsContextValue::Tensor(Arc::new(result_tensor)),
+        );
     }
 
     fn dependencies(&self) -> Vec<NodeId> {

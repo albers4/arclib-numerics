@@ -5,6 +5,7 @@ mod bc;
 mod constant;
 mod equation;
 mod export;
+mod migrate;
 mod next_state;
 mod probe;
 mod state;
@@ -16,6 +17,7 @@ pub use equation::{
     EquationGraph, EquationNode,
 };
 pub use export::ExportNode;
+pub use migrate::MigrateNode;
 pub use next_state::NextStateNode;
 pub use probe::ProbeNode;
 pub use state::StateNode;

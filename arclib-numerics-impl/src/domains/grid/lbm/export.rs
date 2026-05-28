@@ -5,7 +5,8 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::marker::PhantomData;
 
-use arclib_numerics_spec::{Tensor, utils::DataExporter};
+use arclib_numerics_spec::tensor::Tensor;
+use arclib_numerics_spec::utils::DataExporter;
 use ndarray::s;
 
 use crate::domains::grid::lbm::topology::LatticeTopology;

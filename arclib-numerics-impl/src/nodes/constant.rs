@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use arclib_graph_impl::fnv1a_hash;
 use arclib_graph_spec::{GraphContext, Node, NodeId, Shape};
-use arclib_numerics_spec::Tensor;
+use arclib_numerics_spec::tensor::Tensor;
 use ndarray::{ArrayD, IxDyn};
 use uuid::Uuid;
 
@@ -26,7 +26,7 @@ impl ConstantNode {
     }
 
     pub fn zeros(shape: Shape) -> Self {
-        Self::new(ArrayD::zeros(IxDyn(&shape.0)))
+        Self::new(Tensor::from_cpu_array(ArrayD::zeros(IxDyn(&shape.0))))
     }
 
     pub fn from_arc(tensor: Arc<Tensor>) -> Self {
@@ -59,7 +59,7 @@ impl Node<NumericsContextValue> for ConstantNode {
     }
 
     fn infer_shape(&self, _inputs: &[Shape]) -> Result<Shape, String> {
-        Ok(Shape(self.tensor.shape().to_vec()))
+        Ok(self.tensor.shape.clone())
     }
 
     fn as_node(&self) -> &dyn Node<NumericsContextValue> {

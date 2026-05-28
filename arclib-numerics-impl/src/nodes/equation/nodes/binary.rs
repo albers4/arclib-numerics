@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use arclib_graph_impl::fnv1a_hash;
 use arclib_graph_spec::{Node, NodeId, Shape};
-use arclib_numerics_spec::Tensor;
+use arclib_numerics_spec::tensor::Tensor;
 use ndarray::ArrayD;
 use uuid::Uuid;
 
@@ -60,15 +60,22 @@ impl Node<NumericsContextValue> for EqBinaryNode {
             _ => panic!("EqBinaryNode: RHS missing"),
         };
 
+        let lhs_arr = lhs.as_cpu();
+        let rhs_arr = rhs.as_cpu();
+
         let result: ArrayD<f32> = match self.op {
-            EqBinaryOp::Add => lhs + rhs,
-            EqBinaryOp::Sub => lhs - rhs,
-            EqBinaryOp::Mul => lhs * rhs,
-            EqBinaryOp::Div => lhs / rhs,
+            EqBinaryOp::Add => lhs_arr + rhs_arr,
+            EqBinaryOp::Sub => lhs_arr - rhs_arr,
+            EqBinaryOp::Mul => lhs_arr * rhs_arr,
+            EqBinaryOp::Div => lhs_arr / rhs_arr,
         };
 
-        ctx.temp
-            .insert(self.id, NumericsContextValue::Tensor(Arc::new(result)));
+        let result_tensor = Tensor::from_cpu_array(result);
+
+        ctx.temp.insert(
+            self.id,
+            NumericsContextValue::Tensor(Arc::new(result_tensor)),
+        );
     }
 
     fn dependencies(&self) -> Vec<NodeId> {

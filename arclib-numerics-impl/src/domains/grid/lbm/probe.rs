@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use arclib_numerics_spec::{Tensor, utils::ProbeExtractor};
+use arclib_numerics_spec::{tensor::Tensor, utils::ProbeExtractor};
 use ndarray::s;
 
 use crate::domains::grid::lbm::topology::LatticeTopology;
@@ -37,7 +37,7 @@ impl<T: LatticeTopology> ProbeExtractor for LbmProbeExtractor<T> {
 
             let mut in_bounds = true;
             for (d, _) in coord.iter().enumerate().take(T::DIM) {
-                if coord[d] >= tensor.shape()[d] {
+                if coord[d] >= tensor.shape.0[d] {
                     in_bounds = false;
                     break;
                 }

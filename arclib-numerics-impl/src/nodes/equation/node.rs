@@ -1,7 +1,7 @@
 // Copyright (c) 2026 ARC (Applied Research & Computation)
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-use std::os::raw::c_void;
+use std::ffi::c_void;
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
@@ -9,8 +9,9 @@ use std::{
 
 use arclib_graph_impl::fnv1a_hash;
 use arclib_graph_spec::{GraphContext, GraphLike, Node, NodeId, Shape};
-use arclib_numerics_spec::Tensor;
 use arclib_numerics_spec::kernel::CompiledKernel;
+use arclib_numerics_spec::tensor::Tensor;
+use ndarray::ArrayD;
 use uuid::Uuid;
 
 use crate::{context::NumericsContextValue, nodes::equation::graph::EquationGraph};
@@ -77,12 +78,12 @@ impl EquationNode {
     ) -> Arc<Tensor> {
         let ix_shape = ndarray::IxDyn(&shape.0);
         match ctx.temp.remove(id) {
-            Some(NumericsContextValue::Tensor(v)) if v.raw_dim() == ix_shape => v,
+            Some(NumericsContextValue::Tensor(v)) if v.shape == shape => v,
             Some(other) => {
                 ctx.temp.insert(*id, other);
-                Arc::new(Tensor::zeros(ix_shape))
+                Arc::new(Tensor::from_cpu_array(ArrayD::zeros(ix_shape)))
             }
-            None => Arc::new(Tensor::zeros(ix_shape)),
+            None => Arc::new(Tensor::from_cpu_array(ArrayD::zeros(ix_shape))),
         }
     }
 }
@@ -118,7 +119,7 @@ impl Node<NumericsContextValue> for EquationNode {
         // CRITICAL: Ensure contiguous C-style memory layout for the C-kernel
         let input_views: Vec<_> = input_arcs
             .iter()
-            .map(|arc_t| arc_t.as_standard_layout())
+            .map(|arc_t| arc_t.as_cpu().as_standard_layout())
             .collect();
 
         let input_ptrs: Vec<*const c_void> = input_views
@@ -129,15 +130,6 @@ impl Node<NumericsContextValue> for EquationNode {
         let output_tensor_mut = Arc::make_mut(&mut output_arc);
         let output_ptr = output_tensor_mut.as_mut_ptr();
         let mut output_ptrs = [output_ptr as *mut c_void];
-
-        // DEBUG
-        //let f_in_ptr = input_ptrs[0] as *const f32;
-        //let solid_ptr = input_ptrs[1] as *const f32;
-        //unsafe {
-        //    println!("[DEBUG FFI] inputs[0] (Should be Fluid ~0.111): [{:.3}, {:.3}, {:.3}]", *f_in_ptr, *f_in_ptr.add(1), *f_in_ptr.add(2));
-        //    println!("[DEBUG FFI] inputs[1] (Should be Solid 0.0 or 1.0): [{:.3}, {:.3}, {:.3}]", *solid_ptr, *solid_ptr.add(1), *solid_ptr.add(2));
-        //}
-        // DEBUG
 
         if let Some(kernel) = &self.compiled_kernel {
             let params_ptr = kernel.params_bytes.as_ptr() as *const c_void;

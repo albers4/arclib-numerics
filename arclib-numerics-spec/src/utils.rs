@@ -1,7 +1,7 @@
 // Copyright (c) 2026 ARC (Applied Research & Computation)
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-use crate::Tensor;
+use crate::tensor::Tensor;
 
 pub trait DataExporter: Send + Sync {
     fn export(&self, state: &Tensor, step: usize, base_path: &str);

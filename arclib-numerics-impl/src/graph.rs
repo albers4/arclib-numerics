@@ -13,7 +13,7 @@ use arclib_graph_spec::{GraphLike, Node, NodeId, Shape};
 use crate::{
     BoundaryConditionNode, ConstantNode, NextStateNode, ProbeNode, StateNode,
     context::NumericsContextValue,
-    nodes::{EquationGraph, EquationNode, ExportNode},
+    nodes::{EquationGraph, EquationNode, ExportNode, MigrateNode},
 };
 
 #[derive(Default)]
@@ -32,13 +32,14 @@ impl NumericsGraph {
         inner.register_pool::<BoundaryConditionNode>();
         inner.register_pool::<ExportNode>();
         inner.register_pool::<ProbeNode>();
+        inner.register_pool::<MigrateNode>();
 
         Self { inner }
     }
 
     fn get_outer_shape(&self, id: NodeId) -> Result<Shape, String> {
         match self.inner.state_map.get(&id) {
-            Some(NumericsContextValue::Tensor(t)) => Ok(Shape(t.shape().to_vec())),
+            Some(NumericsContextValue::Tensor(t)) => Ok(t.shape.clone()),
             _ => Err(format!(
                 "Cannot determine shape for outer node {:?}. Is it initialized in the context?",
                 id
@@ -113,7 +114,7 @@ impl GraphLike<NumericsContextValue> for NumericsGraph {
         for &node_id in &schedule {
             // Prefer actual runtime shapes if user seeded the values_map
             if let Some(NumericsContextValue::Tensor(t)) = self.inner.state_map.get(&node_id) {
-                outer_shape.insert(node_id, Shape(t.shape().to_vec()));
+                outer_shape.insert(node_id, t.shape.clone());
                 continue;
             }
 

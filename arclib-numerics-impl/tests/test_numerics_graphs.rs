@@ -7,7 +7,7 @@ use arclib_numerics_impl::{
     EquationGraph, EquationNode, NumericsContextValue, NumericsGraph, StateNode,
 };
 use arclib_numerics_spec::{
-    checkpoint::CheckpointStrategy, domain::DomainCompiler, kernel::CompiledKernel,
+    checkpoint::CheckpointStrategy, domain::DomainCompiler, kernel::CompiledKernel, tensor::Tensor,
 };
 use ndarray::{ArrayD, arr1};
 use std::{collections::HashMap, ffi::c_void, sync::Arc};
@@ -90,14 +90,16 @@ fn test_equation_node_ffi_execution() {
 
     let input_tensor: ArrayD<f32> = arr1(&[1.0, 2.0, 3.0, 4.0]).into_dyn();
 
-    ctx.temp
-        .insert(id_a, NumericsContextValue::Tensor(Arc::new(input_tensor)));
+    ctx.temp.insert(
+        id_a,
+        NumericsContextValue::Tensor(Arc::new(Tensor::from_cpu_array(input_tensor))),
+    );
 
     eq_node.compute(&mut ctx);
 
     if let Some(NumericsContextValue::Tensor(out)) = ctx.temp.get(&eq_node.id) {
         let expected: ArrayD<f32> = arr1(&[2.0, 3.0, 4.0, 5.0]).into_dyn();
-        assert_eq!(out.as_ref(), &expected, "C-Kernel FFI addition failed");
+        assert_eq!(out.as_cpu(), &expected, "C-Kernel FFI addition failed");
     } else {
         panic!("Output tensor missing from context");
     }
@@ -114,11 +116,15 @@ fn test_dynamic_mutation_and_rewiring() {
 
     num_graph.inner.state_map.insert(
         id_u,
-        NumericsContextValue::Tensor(Arc::new(arr1(&[1.0, 2.0]).into_dyn())),
+        NumericsContextValue::Tensor(Arc::new(Tensor::from_cpu_array(
+            arr1(&[1.0, 2.0]).into_dyn(),
+        ))),
     );
     num_graph.inner.state_map.insert(
         id_v,
-        NumericsContextValue::Tensor(Arc::new(arr1(&[10.0, 20.0]).into_dyn())),
+        NumericsContextValue::Tensor(Arc::new(Tensor::from_cpu_array(
+            arr1(&[10.0, 20.0]).into_dyn(),
+        ))),
     );
 
     // Initial equation u + v

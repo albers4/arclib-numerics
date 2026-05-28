@@ -12,6 +12,7 @@ use arclib_numerics_impl::{
         probe::ScalarProbeExtractor,
     },
 };
+use arclib_numerics_spec::tensor::Tensor;
 use ndarray::{ArrayD, IxDyn};
 
 fn test_output_dir() -> PathBuf {
@@ -58,7 +59,7 @@ fn test_lbm_d3q19_cavity() {
         }
     }
     let solid_tensor = ArrayD::from_shape_vec(IxDyn(&[nx, ny, nz]), solid_data).unwrap();
-    let solid_id = graph.add_node(ConstantNode::new(solid_tensor));
+    let solid_id = graph.add_node(ConstantNode::new(Tensor::from_cpu_array(solid_tensor)));
 
     // --- FLUID STATE ----
     let f_id = graph.add_node(StateNode::new("f"));
@@ -95,10 +96,10 @@ fn test_lbm_d3q19_cavity() {
         }
     }
     let f_tensor = ArrayD::from_shape_vec(IxDyn(&[nx, ny, nz, 19]), f_data).unwrap();
-    graph
-        .inner
-        .state_map
-        .insert(f_id, NumericsContextValue::Tensor(Arc::new(f_tensor)));
+    graph.inner.state_map.insert(
+        f_id,
+        NumericsContextValue::Tensor(Arc::new(Tensor::from_cpu_array(f_tensor))),
+    );
 
     // --- LBM EQUATION (Stream + Collide) ---
     let compiler = Arc::new(LatticeCompiler::<D3Q19>::new(nx, ny, nz, omega));
@@ -130,10 +131,10 @@ fn test_lbm_d3q19_cavity() {
         }
     }
     let lid_mask_tensor = ArrayD::from_shape_vec(IxDyn(&[nx, ny, nz]), lid_mask_data).unwrap();
-    let lid_mask_id = graph.add_node(ConstantNode::new(lid_mask_tensor));
+    let lid_mask_id = graph.add_node(ConstantNode::new(Tensor::from_cpu_array(lid_mask_tensor)));
 
     let u_lid_tensor = ArrayD::from_shape_vec(IxDyn(&[nx, ny, nz, 3]), u_lid_data).unwrap();
-    let u_lid_id = graph.add_node(ConstantNode::new(u_lid_tensor));
+    let u_lid_id = graph.add_node(ConstantNode::new(Tensor::from_cpu_array(u_lid_tensor)));
 
     let bc_meta = BoundaryCondition::dirichlet();
     let bc_node_id = graph.add_node(BoundaryConditionNode::new(

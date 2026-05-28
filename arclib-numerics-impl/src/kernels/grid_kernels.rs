@@ -1,7 +1,7 @@
 // Copyright (c) 2026 ARC (Applied Research & Computation)
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-use std::os::raw::c_void;
+use std::ffi::c_void;
 
 #[repr(C)]
 pub struct LbmParams {

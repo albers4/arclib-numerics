@@ -4,7 +4,8 @@
 use std::sync::Arc;
 
 use arclib_graph_spec::ContextValueLike;
-use arclib_numerics_spec::Tensor;
+
+use arclib_numerics_spec::tensor::Tensor;
 
 #[derive(Clone)]
 pub enum NumericsContextValue {

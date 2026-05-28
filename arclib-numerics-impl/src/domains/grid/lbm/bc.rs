@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use arclib_numerics_spec::{Tensor, bc::BcEvaluator};
+use arclib_numerics_spec::{bc::BcEvaluator, tensor::Tensor};
 use ndarray::s;
 
 use crate::domains::grid::lbm::topology::LatticeTopology;
@@ -23,7 +23,11 @@ impl<T: LatticeTopology> LbmVelocityBC<T> {
 
 impl<T: LatticeTopology> BcEvaluator for LbmVelocityBC<T> {
     fn apply(&self, state: &mut Tensor, mask: &Tensor, values: &Tensor) {
-        let shape = state.shape();
+        let mask_cpu = mask.as_cpu();
+        let values_cpu = values.as_cpu();
+        let state_cpu = state.as_cpu();
+
+        let shape = state_cpu.shape();
         let nx = shape[0];
         let ny = if T::DIM > 1 { shape[1] } else { 1 };
         let nz = if T::DIM > 2 { shape[2] } else { 1 };
@@ -34,8 +38,8 @@ impl<T: LatticeTopology> BcEvaluator for LbmVelocityBC<T> {
                 return false;
             }
             let val = match T::DIM {
-                2 => mask[[x as usize, y as usize]],
-                3 => mask[[x as usize, y as usize, z as usize]],
+                2 => mask_cpu[[x as usize, y as usize]],
+                3 => mask_cpu[[x as usize, y as usize, z as usize]],
                 _ => 0.0,
             };
             val < 0.5
@@ -45,8 +49,8 @@ impl<T: LatticeTopology> BcEvaluator for LbmVelocityBC<T> {
             for y in 0..ny {
                 for z in 0..nz {
                     let m = match T::DIM {
-                        2 => mask[[x, y]],
-                        3 => mask[[x, y, z]],
+                        2 => mask_cpu[[x, y]],
+                        3 => mask_cpu[[x, y, z]],
                         _ => 0.0,
                     };
 
@@ -58,11 +62,11 @@ impl<T: LatticeTopology> BcEvaluator for LbmVelocityBC<T> {
                         };
 
                         let u_wall = match T::DIM {
-                            2 => [values[[x, y, 0]], values[[x, y, 1]], 0.0],
+                            2 => [values_cpu[[x, y, 0]], values_cpu[[x, y, 1]], 0.0],
                             3 => [
-                                values[[x, y, z, 0]],
-                                values[[x, y, z, 1]],
-                                values[[x, y, z, 2]],
+                                values_cpu[[x, y, z, 0]],
+                                values_cpu[[x, y, z, 1]],
+                                values_cpu[[x, y, z, 2]],
                             ],
                             _ => [0.0; 3],
                         };
