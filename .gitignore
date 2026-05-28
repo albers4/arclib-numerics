@@ -12,6 +12,7 @@ docs/build/
 # Rust
 target/
 Cargo.lock
+build/
 
 # Maturin / Build
 dist/
