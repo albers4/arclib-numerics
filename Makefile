@@ -48,7 +48,7 @@ python: python-deps python-dev-deps rust
 
 .PHONY: rust-test python-test test
 rust-test:
-	ARCLIB_TEST_OUTPUT=$(CURDIR)/build/test_output cargo test --workspace
+	ARCLIB_TEST_OUTPUT=$(CURDIR)/build/test_output cargo test --release --workspace -- --no-capture
 
 python-test: python-dev-deps
 	cd $(PY_PKG_DIR) && ../$(PYTHON) -m pytest tests

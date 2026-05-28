@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
-//#include <omp.h>
+#include <omp.h>
 
 extern "C" {
 
@@ -22,6 +22,7 @@ void lbm_d2q9_fused_forward(
         f_out[i] = f_in[i];
     }
 
+    #pragma omp parallel for collapse(2) schedule(static)
     for (int x = 0; x < nx; x++) {
         for (int y = 0; y < ny; y++) {
             int idx = x * ny + y;
@@ -86,6 +87,7 @@ void lbm_d2q9_fused_backward(
     float omega,
     int nx, int ny
 ) {
+    #pragma omp parallel for collapse(2) schedule(static)
     for (int x = 0; x < nx; x++) {
         for (int y = 0; y < ny; y++) {
             int idx = x * ny + y;

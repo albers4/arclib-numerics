@@ -121,7 +121,7 @@ fn test_lbm_cavity() {
     ));
 
     // --- PROBE 1 ---
-    let mask_probe_id = graph.add_node(ProbeNode::new(
+    let _mask_probe_id = graph.add_node(ProbeNode::new(
         "Solid Mask",
         solid_id,
         vec![vec![0, 0], vec![nx - 1, 0], vec![nx / 2, ny / 2]],
@@ -141,7 +141,7 @@ fn test_lbm_cavity() {
     // --- EXPORT ---
     let path = test_output_dir().join("lid-driven-cavity");
     let exporter = Arc::new(LbmVtkExporter::new(nx, ny));
-    let export_node_id = graph.add_node(ExportNode::new(
+    let _export_node_id = graph.add_node(ExportNode::new(
         bc_node_id,
         1000,
         path.to_str().unwrap(),
@@ -151,7 +151,7 @@ fn test_lbm_cavity() {
     let _next_state_id = graph.add_node(NextStateNode::new(f_id, fluid_probe_id));
 
     graph.compile().unwrap();
-    for t in 0..3_000 {
+    for t in 0..20_000 {
         graph.step().unwrap();
 
         if t % 1000 == 0 {

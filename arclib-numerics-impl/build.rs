@@ -9,19 +9,33 @@ fn main() {
     let mut build = cc::Build::new();
     build
         .cpp(true)
+        .include("cpp")
+        .file("cpp/grid/lbm_d2q9_fused.cpp")
         .opt_level(3)
-        .compiler("clang++-16")
-        .flag("-std=c++17")
-        .flag("-fno-exceptions")
         .flag_if_supported("-march=native")
         .flag_if_supported("-ffast-math")
-        .flag_if_supported("-fopenmp")
-        .include("cpp")
-        .file("cpp/grid/lbm_d2q9_fused.cpp");
+        .flag_if_supported("-fno-exceptions")
+        .flag_if_supported("-std=c++17");
 
-    build.out_dir(&out_dir).compile("grid_kernels");
+    let compiler = build.get_compiler();
+
+    if compiler.is_like_msvc() {
+        build.flag("/openmp");
+    } else {
+        build.flag("-fopenmp");
+    }
+
+    build.out_dir(&out_dir).compile("lbm_kernels");
+
+    if compiler.is_like_msvc() {
+        // MSVC handles linking automatically when /openmp is used
+    } else if compiler.is_like_gnu() {
+        println!("cargo:rustc-link-lib=dylib=gomp");
+    } else {
+        println!("cargo:rustc-link-lib=dylib=omp");
+    }
 
     println!("cargo:rustc-link-search=native={}", out_dir);
-    println!("cargo:rustc-link-lib=static=grid_kernels");
+    println!("cargo:rustc-link-lib=static=lbm_kernels");
     println!("cargo:rerun-if-changed=cpp/");
 }
