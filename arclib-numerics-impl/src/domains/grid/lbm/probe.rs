@@ -1,47 +1,89 @@
 // Copyright (c) 2026 ARC (Applied Research & Computation)
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
+use std::marker::PhantomData;
+
 use arclib_numerics_spec::{Tensor, utils::ProbeExtractor};
 use ndarray::s;
 
-pub struct LbmProbeExtractor;
+use crate::domains::grid::lbm::topology::LatticeTopology;
 
-impl ProbeExtractor for LbmProbeExtractor {
+#[derive(Default)]
+pub struct LbmProbeExtractor<T: LatticeTopology> {
+    _marker: PhantomData<T>,
+}
+
+impl<T: LatticeTopology> LbmProbeExtractor<T> {
+    pub fn new() -> Self {
+        Self {
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<T: LatticeTopology> ProbeExtractor for LbmProbeExtractor<T> {
     fn extract(&self, tensor: &Tensor, coords: &[Vec<usize>]) -> String {
         let mut out = String::new();
-        let cx = [0.0, 1.0, 0.0, -1.0, 0.0, 1.0, -1.0, -1.0, 1.0];
-        let cy = [0.0, 0.0, 1.0, 0.0, -1.0, 1.0, 1.0, -1.0, -1.0];
 
         for coord in coords {
-            if coord.len() >= 2 {
-                let x = coord[0];
-                let y = coord[1];
-
-                if x >= tensor.shape()[0] || y >= tensor.shape()[1] {
-                    out.push_str(&format!("  @ {:?} | Out of bounds\n", coord));
-                    continue;
-                }
-
-                let f = tensor.slice(s![x, y, ..]);
-                let mut rho = 0.0;
-                let mut mux = 0.0;
-                let mut muy = 0.0;
-                for q in 0..9 {
-                    rho += f[q];
-                    mux += f[q] * cx[q];
-                    muy += f[q] * cy[q];
-                }
-
-                let ux = if rho > 1e-6 { mux / rho } else { 0.0 };
-                let uy = if rho > 1e-6 { muy / rho } else { 0.0 };
-
+            if coord.len() != T::DIM {
                 out.push_str(&format!(
-                    "  @ {:?} | rho: {:.4} | u: [{:.4}, {:.4}]\n",
-                    coord, rho, ux, uy
+                    "  @ {:?} | Dimension mismatch (expected {})\n",
+                    coord,
+                    T::DIM
+                ));
+                continue;
+            }
+
+            let mut in_bounds = true;
+            for (d, _) in coord.iter().enumerate().take(T::DIM) {
+                if coord[d] >= tensor.shape()[d] {
+                    in_bounds = false;
+                    break;
+                }
+            }
+            if !in_bounds {
+                out.push_str(&format!("  @ {:?} | Out of bounds)\n", coord));
+                continue;
+            }
+
+            let f_slice = match T::DIM {
+                2 => tensor.slice(s![coord[0], coord[1], ..]),
+                3 => tensor.slice(s![coord[0], coord[1], coord[2], ..]),
+                _ => panic!("Unsupported DIM"),
+            };
+
+            let mut rho = 0.0;
+            let mut u = vec![0.0; T::DIM];
+
+            for q in 0..T::Q {
+                let fq = f_slice[q];
+                rho += fq;
+                u[0] += fq * T::CX[q] as f32;
+                if T::DIM > 1 {
+                    u[1] += fq * T::CY[q] as f32;
+                }
+                if T::DIM > 2 {
+                    u[2] += fq * T::CZ[q] as f32;
+                }
+            }
+
+            if rho > 1e-6 {
+                for ud in u.iter_mut().take(T::DIM) {
+                    *ud /= rho;
+                }
+            }
+
+            out.push_str(&format!("  @ {:?} | rho: {:.4} | u: [", coord, rho));
+            for (d, _) in u.iter().enumerate().take(T::DIM) {
+                out.push_str(&format!(
+                    "{:.4}{}",
+                    u[d],
+                    if d == T::DIM - 1 { "" } else { ", " }
                 ));
             }
+            out.push_str("]\n");
         }
-
         out
     }
 }

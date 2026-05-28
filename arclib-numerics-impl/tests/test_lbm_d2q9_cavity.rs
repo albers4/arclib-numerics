@@ -8,7 +8,7 @@ use arclib_numerics_impl::{
     BoundaryCondition, BoundaryConditionNode, ConstantNode, EquationGraph, EquationNode,
     ExportNode, NextStateNode, NumericsContextValue, NumericsGraph, ProbeNode, StateNode,
     domains::{
-        grid::{LatticeCompiler, LbmProbeExtractor, LbmVtkExporter, LbmZouHeVelocity},
+        grid::{D2Q9, LatticeCompiler, LbmProbeExtractor, LbmVelocityBC, LbmVtkExporter},
         probe::ScalarProbeExtractor,
     },
 };
@@ -23,7 +23,7 @@ fn test_output_dir() -> PathBuf {
 }
 
 #[test]
-fn test_lbm_cavity() {
+fn test_lbm_d2q9_cavity() {
     let nx = 100;
     let ny = 100;
     let omega = 1.7; // relaxation parameter
@@ -80,7 +80,7 @@ fn test_lbm_cavity() {
         .insert(f_id, NumericsContextValue::Tensor(Arc::new(f_tensor)));
 
     // --- LBM EQUATION (Stream + Collide) ---
-    let compiler = Arc::new(LatticeCompiler::new(nx, ny, omega));
+    let compiler = Arc::new(LatticeCompiler::<D2Q9>::new(nx, ny, 0, omega));
     let mut eq = EquationGraph::new(compiler.clone());
     let f_var = eq.var("f");
     let _solid_var = eq.var("solid");
@@ -91,7 +91,7 @@ fn test_lbm_cavity() {
     mapping.insert("solid".to_string(), solid_id);
     let eq_node_id = graph.add_node(EquationNode::new(eq, mapping));
 
-    // --- MOVING LID BC (Zou/He)
+    // --- MOVING LID BC ---
     let mut lid_mask_data = vec![0.0f32; nx * ny];
     let mut u_lid_data = vec![0.0f32; nx * ny * 2];
 
@@ -117,7 +117,7 @@ fn test_lbm_cavity() {
         lid_mask_id,
         u_lid_id,
         bc_meta,
-        Arc::new(LbmZouHeVelocity),
+        Arc::new(LbmVelocityBC::<D2Q9>::new()),
     ));
 
     // --- PROBE 1 ---
@@ -133,14 +133,14 @@ fn test_lbm_cavity() {
     let fluid_probe_id = graph.add_node(ProbeNode::new(
         "Fluid State",
         bc_node_id,
-        vec![vec![50, ny - 1], vec![50, 50], vec![50, 1]],
+        vec![vec![nx / 2, ny - 1], vec![nx / 2, ny / 2], vec![nx / 2, 1]],
         1000,
-        Arc::new(LbmProbeExtractor),
+        Arc::new(LbmProbeExtractor::<D2Q9>::new()),
     ));
 
     // --- EXPORT ---
-    let path = test_output_dir().join("lid-driven-cavity");
-    let exporter = Arc::new(LbmVtkExporter::new(nx, ny));
+    let path = test_output_dir().join("lid-driven-cavity-d2q9");
+    let exporter = Arc::new(LbmVtkExporter::<D2Q9>::new(nx, ny, 0));
     let _export_node_id = graph.add_node(ExportNode::new(
         bc_node_id,
         1000,
@@ -151,7 +151,7 @@ fn test_lbm_cavity() {
     let _next_state_id = graph.add_node(NextStateNode::new(f_id, fluid_probe_id));
 
     graph.compile().unwrap();
-    for t in 0..20_000 {
+    for t in 0..10_000 {
         graph.step().unwrap();
 
         if t % 1000 == 0 {

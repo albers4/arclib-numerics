@@ -5,17 +5,10 @@ mod bc;
 mod compiler;
 mod export;
 mod probe;
+mod topology;
 
-use arclib_numerics_spec::domain::Domain;
-pub use bc::LbmZouHeVelocity;
+pub use bc::LbmVelocityBC;
 pub use compiler::LatticeCompiler;
 pub use export::LbmVtkExporter;
 pub use probe::LbmProbeExtractor;
-
-use crate::NumericsContextValue;
-
-pub struct Lattice;
-
-impl Domain<NumericsContextValue> for Lattice {
-    type Compiler = LatticeCompiler;
-}
+pub use topology::{D2Q9, D3Q19};

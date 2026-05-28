@@ -9,8 +9,9 @@ fn main() {
     let mut build = cc::Build::new();
     build
         .cpp(true)
-        .include("cpp")
+        //.include("cpp")
         .file("cpp/grid/lbm_d2q9_fused.cpp")
+        .file("cpp/grid/lbm_d3q19_fused.cpp")
         .opt_level(3)
         .flag_if_supported("-march=native")
         .flag_if_supported("-ffast-math")

@@ -3,4 +3,4 @@
 
 mod lbm;
 
-pub use lbm::{Lattice, LatticeCompiler, LbmProbeExtractor, LbmVtkExporter, LbmZouHeVelocity};
+pub use lbm::{D2Q9, D3Q19, LatticeCompiler, LbmProbeExtractor, LbmVelocityBC, LbmVtkExporter};
