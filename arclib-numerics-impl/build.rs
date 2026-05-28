@@ -9,17 +9,19 @@ fn main() {
     let mut build = cc::Build::new();
     build
         .cpp(true)
+        .opt_level(3)
         .compiler("clang++-16")
         .flag("-std=c++17")
-        .flag("-O3")
         .flag("-fno-exceptions")
-        .flag("-march=native")
+        .flag_if_supported("-march=native")
+        .flag_if_supported("-ffast-math")
+        .flag_if_supported("-fopenmp")
         .include("cpp")
-        .file("cpp/array.cpp");
+        .file("cpp/grid/lbm_d2q9_fused.cpp");
 
-    build.out_dir(&out_dir).compile("array");
+    build.out_dir(&out_dir).compile("grid_kernels");
 
     println!("cargo:rustc-link-search=native={}", out_dir);
-    println!("cargo:rustc-link-lib=static=array");
+    println!("cargo:rustc-link-lib=static=grid_kernels");
     println!("cargo:rerun-if-changed=cpp/");
 }

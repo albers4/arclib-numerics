@@ -6,7 +6,14 @@ license.workspace = true
 build = "build.rs"
 
 [dependencies]
+#arclib-graph-spec = { git = "https://github.com/albers4/arclib-graph", branch = "main" }
+#arclib-graph-impl = { git = "https://github.com/albers4/arclib-graph", branch = "main" }
+arclib-graph-spec = { path = "../../arclib-graph/arclib-graph-spec" }
+arclib-graph-impl = { path = "../../arclib-graph/arclib-graph-impl" }
 arclib-numerics-spec = { path = "../arclib-numerics-spec" }
+uuid = { version = "1", features = ["v4"] }
+numpy = { version = "0.28" }
+ndarray = { version = "0.17" }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -20,7 +27,7 @@ default = ["std"]
 std = []
 
 [[bench]]
-name = "dense_array_benchmark"
+name = "lbm_benchmark"
 harness = false
 
 [profile.release]
