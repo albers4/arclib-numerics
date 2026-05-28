@@ -1,9 +1,15 @@
 // Copyright (c) 2026 ARC (Applied Research & Computation)
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-pub trait DomainCompiler {}
+use arclib_graph_impl::Graph;
+use arclib_graph_spec::ContextValueLike;
 
-pub trait Domain: 'static + Send + Sync {
-    type TopologyState;
-    type Compiler: DomainCompiler;
+use crate::kernel::CompiledKernel;
+
+pub trait Domain<V: ContextValueLike>: 'static + Send + Sync {
+    type Compiler: DomainCompiler<V>;
+}
+
+pub trait DomainCompiler<V: ContextValueLike>: Send + Sync {
+    fn compile(&self, graph: &Graph<V>) -> CompiledKernel;
 }
