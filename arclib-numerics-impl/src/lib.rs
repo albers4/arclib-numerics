@@ -12,6 +12,6 @@ pub use bc::BoundaryCondition;
 pub use context::NumericsContextValue;
 pub use graph::NumericsGraph;
 pub use nodes::{
-    BoundaryConditionNode, ConstantNode, EquationGraph, EquationNode, ExportNode, NextStateNode,
-    ProbeNode, StateNode,
+    BoundaryConditionNode, ConstantNode, EquationGraph, EquationNode, ExportNode, MigrateNode,
+    NextStateNode, ProbeNode, StateNode,
 };

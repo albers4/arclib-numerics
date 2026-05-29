@@ -54,8 +54,9 @@ impl Node<NumericsContextValue> for MigrateNode {
         };
 
         if source_tensor.device == self.target_device {
-            ctx.temp
-                .insert(self.id, NumericsContextValue::Tensor(source_tensor));
+            let value = NumericsContextValue::Tensor(source_tensor);
+            ctx.temp.insert(self.id, value.clone());
+            ctx.next_state.insert(self.id, value);
             return;
         }
 
@@ -107,10 +108,9 @@ impl Node<NumericsContextValue> for MigrateNode {
             _ => panic!("Unsupported migration path"),
         };
 
-        ctx.temp.insert(
-            self.id,
-            NumericsContextValue::Tensor(Arc::new(migrated_tensor)),
-        );
+        let value = NumericsContextValue::Tensor(Arc::new(migrated_tensor));
+        ctx.temp.insert(self.id, value.clone());
+        ctx.next_state.insert(self.id, value);
     }
 
     fn dependencies(&self) -> Vec<NodeId> {
