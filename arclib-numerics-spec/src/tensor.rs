@@ -6,6 +6,10 @@ use std::{ffi::c_void, sync::Arc};
 use arclib_graph_spec::Shape;
 use ndarray::{ArrayD, ArrayView, ArrayViewMut, IxDyn, SliceArg};
 
+unsafe extern "C" {
+    unsafe fn cuda_free_vram(device_ptr: *mut c_void);
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Device {
     Cpu,
@@ -13,7 +17,7 @@ pub enum Device {
 }
 
 pub struct GpuBuffer {
-    pub(crate) handle: *mut c_void,
+    pub handle: *mut c_void,
     pub size_bytes: usize,
 }
 
@@ -25,6 +29,15 @@ impl Clone for GpuBuffer {
         Self {
             handle: self.handle,
             size_bytes: self.size_bytes,
+        }
+    }
+}
+
+impl Drop for GpuBuffer {
+    fn drop(&mut self) {
+        if !self.handle.is_null() {
+            unsafe { cuda_free_vram(self.handle) };
+            self.handle = std::ptr::null_mut();
         }
     }
 }

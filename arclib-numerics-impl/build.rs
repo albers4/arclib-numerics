@@ -9,7 +9,6 @@ fn main() {
     let mut build = cc::Build::new();
     build
         .cpp(true)
-        //.include("cpp")
         .file("cpp/grid/lbm_d2q9_fused.cpp")
         .file("cpp/grid/lbm_d3q19_fused.cpp")
         .opt_level(3)
@@ -39,4 +38,14 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", out_dir);
     println!("cargo:rustc-link-lib=static=lbm_kernels");
     println!("cargo:rerun-if-changed=cpp/");
+
+    let mut cuda_build = cc::Build::new();
+    cuda_build
+        .cuda(true)
+        .file("cpp/grid/cuda_transfer.cu")
+        .opt_level(3);
+
+    cuda_build.compile("cuda_transfers");
+
+    println!("cargo:rustc-link-lib=dylib=cudart");
 }

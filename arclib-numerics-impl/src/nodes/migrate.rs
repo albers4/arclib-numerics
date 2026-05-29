@@ -5,11 +5,18 @@ use std::sync::Arc;
 
 use arclib_graph_impl::fnv1a_hash;
 use arclib_graph_spec::{GraphContext, Node, NodeId, Shape};
-use arclib_numerics_spec::tensor::{Device, DeviceMemory, Tensor};
+use arclib_numerics_spec::tensor::{Device, DeviceMemory, GpuBuffer, Tensor};
 use ndarray::{ArrayD, IxDyn};
+use std::ffi::c_void;
 use uuid::Uuid;
 
 use crate::NumericsContextValue;
+
+unsafe extern "C" {
+    unsafe fn cuda_allocate_vram(size_byte: usize) -> *mut c_void;
+    unsafe fn cuda_upload(host_ptr: *const c_void, device_ptr: *mut c_void, size_bytes: usize);
+    unsafe fn cuda_download(device_ptr: *const c_void, host_ptr: *mut c_void, size_bytes: usize);
+}
 
 #[derive(Clone)]
 pub struct MigrateNode {
@@ -56,25 +63,43 @@ impl Node<NumericsContextValue> for MigrateNode {
         let migrated_tensor = match (&source_tensor.memory.as_ref(), self.target_device) {
             // CPU -> GPU
             (DeviceMemory::Cpu(cpu_arr), Device::Gpu(gpu_id)) => {
-                println!(
-                    "[Migrate] Uploading {:?} to GPU {}",
-                    source_tensor.shape, gpu_id
-                );
-                // Allocate VRAM
-                let mut gpu_tensor = Tensor::gpu_zeros(source_tensor.shape.clone(), gpu_id);
+                let size_bytes = cpu_arr.len() * std::mem::size_of::<f32>();
 
-                // MOCK DMA TRANSFER (Replace with cudaMemcpy)
+                let device_ptr = unsafe { cuda_allocate_vram(size_bytes) };
+                if device_ptr.is_null() {
+                    panic!(
+                        "CUDA OOM: Failed to allocate {} bytes on GPU {}",
+                        size_bytes, gpu_id
+                    )
+                }
 
-                gpu_tensor
+                unsafe {
+                    cuda_upload(cpu_arr.as_ptr() as *const c_void, device_ptr, size_byte);
+                }
+
+                let gpu_buf = GpuBuffer {
+                    handle: device_ptr,
+                    size_bytes,
+                };
+                Tensor {
+                    shape: source_tensor.shape.clone(),
+                    device: Device::Gpu(gpu_id),
+                    memory: Arc::new(DeviceMemory::Gpu(gpu_buf)),
+                }
             }
 
             // GPU -> CPU
             (DeviceMemory::Gpu(gpu_buf), Device::Cpu) => {
-                println!("[Migrate] Downloading {:?} to CPU", source_tensor.shape);
-                // Allocate VRAM
                 let mut cpu_arr = ArrayD::zeros(IxDyn(&source_tensor.shape.0));
+                let size_bytes = gpu_buf.size_bytes;
 
-                // MOCK DMA TRANSFER (Replace with cudaMemcpy)
+                unsafe {
+                    cuda_download(
+                        gpu_buf.handle,
+                        cpu_arr.as_mut_ptr() as *mut c_void,
+                        size_byte,
+                    );
+                }
 
                 Tensor::from_cpu_array(cpu_arr)
             }
