@@ -74,7 +74,7 @@ impl Node<NumericsContextValue> for MigrateNode {
                 }
 
                 unsafe {
-                    cuda_upload(cpu_arr.as_ptr() as *const c_void, device_ptr, size_byte);
+                    cuda_upload(cpu_arr.as_ptr() as *const c_void, device_ptr, size_bytes);
                 }
 
                 let gpu_buf = GpuBuffer {
@@ -97,7 +97,7 @@ impl Node<NumericsContextValue> for MigrateNode {
                     cuda_download(
                         gpu_buf.handle,
                         cpu_arr.as_mut_ptr() as *mut c_void,
-                        size_byte,
+                        size_bytes,
                     );
                 }
 
